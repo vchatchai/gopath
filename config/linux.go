@@ -8,6 +8,7 @@ import (
 	"path"
 	"regexp"
 	"runtime"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 )
@@ -46,7 +47,6 @@ func profile() {
 	homepath, _ := homedir.Dir()
 
 	for _, pf := range profiles {
-
 		profilePath := path.Join(homepath, pf)
 		_, err := os.Stat(profilePath)
 		if err == nil {
@@ -60,6 +60,7 @@ func profile() {
 				linuxProfile.profile = profilePath
 				linuxProfile.gopath = gopath
 			}
+			break
 		}
 
 	}
@@ -94,7 +95,16 @@ func setGoPath(profile, gopath string) (result string, err error) {
 	}
 
 	f.Close()
-	result = re.ReplaceAllString(string(data), fmt.Sprintf(`export GOPATH=%#v`, gopath))
+
+	stringData := string(data)
+
+	if !strings.Contains(stringData, "GOPATH") {
+
+		result = string(data) + fmt.Sprintf("\nexport GOPATH=%#v", gopath)
+	} else {
+		result = re.ReplaceAllString(string(data), fmt.Sprintf(`export GOPATH=%#v`, gopath))
+
+	}
 
 	ioutil.WriteFile(profile, []byte(result), 0644)
 
